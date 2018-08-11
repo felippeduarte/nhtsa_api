@@ -13,9 +13,10 @@ class VehiclesController extends Controller
         $this->nhtsaService = $nhtsaService;
     }
 
-    public function getVehiclesFromGet($modelYear, $manufacturer, $model)
+    public function getVehiclesFromGet(Request $request, $modelYear, $manufacturer, $model)
     {
-        return $this->getVehicles($modelYear, $manufacturer, $model);
+        $withRating = ($request->input('withRating') === "true");
+        return $this->getVehicles($modelYear, $manufacturer, $model, $withRating);
     }
 
     public function getVehiclesFromPost(Request $request)
@@ -27,9 +28,13 @@ class VehiclesController extends Controller
         return $this->getVehicles($modelYear, $manufacturer, $model);
     }
 
-    private function getVehicles($modelYear, $manufacturer, $model)
+    private function getVehicles($modelYear, $manufacturer, $model, $withRating = false)
     {
-        $result = $this->nhtsaService->getVehicles($modelYear, $manufacturer, $model);
+        if($withRating) {
+            $result = $this->nhtsaService->getVehiclesWithRatings($modelYear, $manufacturer, $model);
+        } else {
+            $result = $this->nhtsaService->getVehicles($modelYear, $manufacturer, $model);
+        }
         return response()->json($result);
     }
 }

@@ -25,13 +25,35 @@ class NHTSAService
             return $this->emptyResult();
         }
 
-        $url = $this->getUrl($modelYear, $manufacturer, $model);
+        $url = $this->getVehiclesUrl($modelYear, $manufacturer, $model);
         try {
-            $result = $this->callAPI($url);
-            return $this->formatResults($result);
+            $response = $this->callAPI($url);
+            return $this->formatVehiclesResults($response);
         } catch (\Exception $e) {
             return $this->emptyResult();
         }
+    }
+
+    public function getVehiclesWithRatings($modelYear, $manufacturer, $model)
+    {
+        $vehicles = $this->getVehicles($modelYear, $manufacturer, $model);
+
+        //get the ratings for each founded vehicle
+        if($vehicles['Count'] > 0) {
+            foreach($vehicles['Results'] as &$result) {
+                $url = $this->getVehiclesRatingsUrl($result['VehicleId']);
+                try {
+                    $ratings = $this->callAPI($url);
+                    if($ratings['Count'] > 0) {
+                        $result['CrashRating'] = $ratings['Results'][0]['OverallRating'];
+                    }
+                } catch (\Exception $e) {
+                    //just ignore if an error occur
+                }
+            }
+        }
+
+        return $vehicles;
     }
 
     /**
@@ -66,34 +88,45 @@ class NHTSAService
      * @param array $result
      * @return void
      */
-    private function formatResults($result)
+    private function formatVehiclesResults($data)
     {
         $allowedKeys = ['Count', 'Results'];
 
-        $result = array_filter($result, function($key) use($allowedKeys) {
+        $data = array_filter($data, function($key) use($allowedKeys) {
             return in_array($key, $allowedKeys);
         }, ARRAY_FILTER_USE_KEY);
 
-        $result['Results'] = array_map(function($r) {
+        $data['Results'] = array_map(function($r) {
             return [
                 'Description' => $r['VehicleDescription'],
                 'VehicleId' => $r['VehicleId'],
             ];
-        }, $result['Results']);
+        }, $data['Results']);
 
-        return $result;
+        return $data;
     }
 
     /**
-     * Mount the NTHSA API URL for further query
+     * Mount the NTHSA API Vehicles URL for further query
      *
      * @param int $modelYear
      * @param string $manufacturer
      * @param string $model
      * @return string
      */
-    private function getUrl($modelYear, $manufacturer, $model)
+    private function getVehiclesUrl($modelYear, $manufacturer, $model)
     {
-        return $this->baseUrl . "SafetyRatings/modelyear/$modelYear/make/$manufacturer/model/$model";
+        return $this->baseUrl . "SafetyRatings/modelyear/$modelYear/make/$manufacturer/model/$model?format=json";
+    }
+
+    /**
+     * Mount the NTHSA API RAtings URL for further query
+     *
+     * @param int $vehicleId
+     * @return string
+     */
+    private function getVehiclesRatingsUrl($vehicleId)
+    {
+        return $this->baseUrl . "SafetyRatings/VehicleId/$vehicleId?format=json";
     }
 }
