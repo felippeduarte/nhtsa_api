@@ -1,0 +1,166 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "NHTSA API - for Vehicles",
+        "contact": {
+            "email": "felippduarte@gmail.com"
+        },
+        "version": "0.1"
+    },
+    "paths": {
+        "/vehicles/{modelYear}/{manufacturer}/{model}": {
+            "get": {
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Get information about Vehicle by Model Year, Manufacturer and Model",
+                "operationId": "vehicles",
+                "parameters": [
+                    {
+                        "name": "modelYear",
+                        "in": "path",
+                        "description": "Model Year",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    },
+                    {
+                        "name": "manufacturer",
+                        "in": "path",
+                        "description": "Manufacturer",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "model",
+                        "in": "path",
+                        "description": "Vehicle Model",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "withRating",
+                        "in": "query",
+                        "description": "Set to true to make the API return the vehicle Crash Rating",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "Count": {
+                                            "type": "integer"
+                                        },
+                                        "Result": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VehicleResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/vehicles/": {
+            "post": {
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Get information about Vehicle by Model Year, Manufacturer and Model",
+                "operationId": "vehicles",
+                "requestBody": {
+                    "description": "Vehicle information",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VehicleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "Count": {
+                                            "type": "integer"
+                                        },
+                                        "Result": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VehicleResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "VehicleRequest": {
+                "title": "VehicleRequest",
+                "properties": {
+                    "modelYear": {
+                        "description": "Model Year",
+                        "type": "integer"
+                    },
+                    "manufacturer": {
+                        "description": "Manufacturer",
+                        "type": "string"
+                    },
+                    "model": {
+                        "description": "Model",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "VehicleResponse": {
+                "title": "VehicleResponse",
+                "properties": {
+                    "VehicleId": {
+                        "description": "Vehicle ID",
+                        "type": "integer"
+                    },
+                    "CrashRating": {
+                        "description": "Crash Rating",
+                        "type": "string"
+                    },
+                    "Description": {
+                        "description": "Description",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    }
+}

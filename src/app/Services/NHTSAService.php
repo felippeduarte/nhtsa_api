@@ -19,13 +19,13 @@ class NHTSAService
      * @param string $model
      * @return array
      */
-    public function getVehicles($modelYear, $manufacturer, $model)
+    public function getVehicles($vehicleRequest)
     {
-        if (!$this->validateInput($modelYear, $manufacturer, $model)) {
+        if (!$this->validateInput($vehicleRequest)) {
             return $this->emptyResult();
         }
 
-        $url = $this->getVehiclesUrl($modelYear, $manufacturer, $model);
+        $url = $this->getVehiclesUrl($vehicleRequest);
 
         try {
             $response = $this->callAPI($url);
@@ -37,29 +37,33 @@ class NHTSAService
 
     /**
      * Call the NHTSA API and return formatted data
-     * For each vehicle found, do a subsequent call and get the OverallRating
+     * For each vehicle found, do a subsequent call and get the OverallRating as CrashRating
      *
      * @param int $modelYear
      * @param string $manufacturer
      * @param string $model
      * @return array
      */
-    public function getVehiclesWithRatings($modelYear, $manufacturer, $model)
+    public function getVehiclesWithRatings($vehicleRequest)
     {
-        if (!$this->validateInput($modelYear, $manufacturer, $model)) {
+        if (!$this->validateInput($vehicleRequest)) {
             return $this->emptyResult();
         }
 
-        $vehicles = $this->getVehicles($modelYear, $manufacturer, $model);
+        $vehicles = $this->getVehicles($vehicleRequest);
 
         //get the ratings for each founded vehicle
         if ($vehicles['Count'] > 0) {
-            foreach ($vehicles['Results'] as &$result) {
-                $url = $this->getVehiclesRatingsUrl($result['VehicleId']);
+            //to avoid multiple maps to the response array
+            //we use the array directly instead of VehicleResponse object
+            foreach ($vehicles['Results'] as &$vehicleResponse) {
+                $url = $this->getVehiclesRatingsUrl($vehicleResponse['VehicleId']);
+
                 try {
                     $ratings = $this->callAPI($url);
+
                     if ($ratings['Count'] > 0) {
-                        $result['CrashRating'] = $ratings['Results'][0]['OverallRating'];
+                        $vehicleResponse['CrashRating'] = $ratings['Results'][0]['OverallRating'];
                     }
                 } catch (\Exception $e) {
                     //if there is an error in any call, return an empty result
@@ -79,12 +83,12 @@ class NHTSAService
      * @param string $model
      * @return boolean
      */
-    private function validateInput($modelYear, $manufacturer, $model)
+    private function validateInput($vehicleRequest)
     {
-        if (empty($modelYear) ||
-            !is_numeric($modelYear) ||
-            empty($manufacturer) ||
-            empty($model)
+        if (empty($vehicleRequest->modelYear) ||
+            !is_numeric($vehicleRequest->modelYear) ||
+            empty($vehicleRequest->manufacturer) ||
+            empty($vehicleRequest->model)
         ) {
             return false;
         }
@@ -128,15 +132,17 @@ class NHTSAService
     {
         $allowedKeys = ['Count', 'Results'];
 
+        //filter the result set only with Allowed Keys
         $data = array_filter($data, function ($key) use ($allowedKeys) {
             return in_array($key, $allowedKeys);
         }, ARRAY_FILTER_USE_KEY);
 
         $data['Results'] = array_map(function ($r) {
-            return [
-                'Description' => $r['VehicleDescription'],
-                'VehicleId' => $r['VehicleId'],
-            ];
+            $vehicleResponse = app()->makeWith('App\VehicleResponse', [
+                'description' => $r['VehicleDescription'],
+                'vehicleId' => $r['VehicleId'],
+            ]);
+            return $vehicleResponse->toArray();
         }, $data['Results']);
 
         return $data;
@@ -150,9 +156,9 @@ class NHTSAService
      * @param string $model
      * @return string
      */
-    private function getVehiclesUrl($modelYear, $manufacturer, $model)
+    private function getVehiclesUrl($vehicleRequest)
     {
-        return $this->baseUrl . "SafetyRatings/modelyear/$modelYear/make/$manufacturer/model/$model?format=json";
+        return $this->baseUrl . "SafetyRatings/modelyear/$vehicleRequest->modelYear/make/$vehicleRequest->manufacturer/model/$vehicleRequest->model?format=json";
     }
 
     /**
