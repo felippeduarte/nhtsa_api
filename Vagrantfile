@@ -20,12 +20,13 @@ echo -e "\n--- Installing PHP 7.2 ---\n"
 sudo apt-get -y install python-software-properties
 sudo add-apt-repository ppa:ondrej/php
 sudo apt-get -qq update
-sudo apt-get install -y php7.2 php7.2-fpm php7.2-cli php7.2-common php7.2-mbstring php7.2-gd php7.2-xml php7.2-zip
+sudo apt-get install -y php7.2 php7.2-fpm php7.2-cli php7.2-common php7.2-mbstring php7.2-gd php7.2-xml php7.2-zip php-xdebug
 curl -Ss https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/bin/composer
 
 service nginx restart
 
+echo cd /vagrant/src/ >> ~/.bashrc
 echo -e "\n--- All set! Rock n' roll! ---\n"
 SCRIPT
 
