@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use \Illuminate\Http\Request;
 use App\Services\NHTSAService;
 
@@ -30,7 +31,7 @@ class VehiclesController extends Controller
 
     private function getVehicles($modelYear, $manufacturer, $model, $withRating = false)
     {
-        if($withRating) {
+        if ($withRating) {
             $result = $this->nhtsaService->getVehiclesWithRatings($modelYear, $manufacturer, $model);
         } else {
             $result = $this->nhtsaService->getVehicles($modelYear, $manufacturer, $model);

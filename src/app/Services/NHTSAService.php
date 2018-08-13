@@ -8,7 +8,7 @@ class NHTSAService
 
     public function __construct()
     {
-        $this->baseUrl = env('NHTSA_API_ADDRESS');
+        $this->baseUrl = env('NHTSA_BASE_API_ADDRESS');
     }
 
     /**
@@ -17,15 +17,16 @@ class NHTSAService
      * @param int $modelYear
      * @param string $manufacturer
      * @param string $model
-     * @return string
+     * @return array
      */
     public function getVehicles($modelYear, $manufacturer, $model)
     {
-        if(empty($modelYear) || empty($manufacturer) || empty($model)) {
+        if (!$this->validateInput($modelYear, $manufacturer, $model)) {
             return $this->emptyResult();
         }
 
         $url = $this->getVehiclesUrl($modelYear, $manufacturer, $model);
+
         try {
             $response = $this->callAPI($url);
             return $this->formatVehiclesResults($response);
@@ -34,26 +35,61 @@ class NHTSAService
         }
     }
 
+    /**
+     * Call the NHTSA API and return formatted data
+     * For each vehicle found, do a subsequent call and get the OverallRating
+     *
+     * @param int $modelYear
+     * @param string $manufacturer
+     * @param string $model
+     * @return array
+     */
     public function getVehiclesWithRatings($modelYear, $manufacturer, $model)
     {
+        if (!$this->validateInput($modelYear, $manufacturer, $model)) {
+            return $this->emptyResult();
+        }
+
         $vehicles = $this->getVehicles($modelYear, $manufacturer, $model);
 
         //get the ratings for each founded vehicle
-        if($vehicles['Count'] > 0) {
-            foreach($vehicles['Results'] as &$result) {
+        if ($vehicles['Count'] > 0) {
+            foreach ($vehicles['Results'] as &$result) {
                 $url = $this->getVehiclesRatingsUrl($result['VehicleId']);
                 try {
                     $ratings = $this->callAPI($url);
-                    if($ratings['Count'] > 0) {
+                    if ($ratings['Count'] > 0) {
                         $result['CrashRating'] = $ratings['Results'][0]['OverallRating'];
                     }
                 } catch (\Exception $e) {
-                    //just ignore if an error occur
+                    //if there is an error in any call, return an empty result
+                    return $this->emptyResult();
                 }
             }
         }
 
         return $vehicles;
+    }
+
+    /**
+     * Validate the input for Vehicles request
+     *
+     * @param string $modelYear
+     * @param string $manufacturer
+     * @param string $model
+     * @return boolean
+     */
+    private function validateInput($modelYear, $manufacturer, $model)
+    {
+        if (empty($modelYear) ||
+            !is_numeric($modelYear) ||
+            empty($manufacturer) ||
+            empty($model)
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -86,17 +122,17 @@ class NHTSAService
      * Eliminate/rename keys
      *
      * @param array $result
-     * @return void
+     * @return array
      */
     private function formatVehiclesResults($data)
     {
         $allowedKeys = ['Count', 'Results'];
 
-        $data = array_filter($data, function($key) use($allowedKeys) {
+        $data = array_filter($data, function ($key) use ($allowedKeys) {
             return in_array($key, $allowedKeys);
         }, ARRAY_FILTER_USE_KEY);
 
-        $data['Results'] = array_map(function($r) {
+        $data['Results'] = array_map(function ($r) {
             return [
                 'Description' => $r['VehicleDescription'],
                 'VehicleId' => $r['VehicleId'],
