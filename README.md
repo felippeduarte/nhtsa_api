@@ -14,17 +14,23 @@ You can configure this project with Docker or Vagrant.
 
 - Install [Docker](https://docs.docker.com/install/)
 - Install [Docker Compose](https://docs.docker.com/compose/install/)
-- Go to root folder and run `sudo docker-compose --build -d`
+- Go to root folder and run `sudo docker-compose up -d`
 - (grab some coffee, it will take some time)
 - When the process finishes, the webserver will be running at `http://localhost:8080`
-
+- Run `sudo docker-compose run composer` to install all dependencies
+- All set now, let's use this API.
+-
 #### 2b. The Vagrant Way
 
 - Install [VirtualBox](https://www.virtualbox.org/)
 - Install [Vagrant](https://www.vagrantup.com/intro/getting-started/index.html)
 - Go to root folder and run `vagrant up --provision`
 - (grab some coffee, it will take some time)
-- When the process finishes, the webserver will be running at `http://localhost:8080`
+- When the process finishes, the webserver will be running at `http://localhost:8080`, but there are still more steps
+- Go inside the vagrant machine. Run `vagrant ssh`
+- Make sure you are at `/vagrant/src`
+- Run `composer install` to install all dependencies
+- All set now, let's use this API.
 
 ---
 
@@ -108,5 +114,5 @@ You can also access the built-in documentation, made with [Swagger](https://swag
 
 #### Running Tests
 
-With docker: `sudo docker-compose run php /var/www/html/vendor/bin/phpunit /var/www/html/tests/`
-With Vagrant: Go to root `/vagrant/src` then run `vendor/bin/phpunit`
+- With docker: `sudo docker-compose run php /var/www/html/vendor/bin/phpunit /var/www/html/tests/`
+- With Vagrant: Enter the machine with `vagrant ssh`, then go to root folder of application, `cd /vagrant/src`, then run `vendor/bin/phpunit`

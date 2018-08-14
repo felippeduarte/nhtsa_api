@@ -26,7 +26,7 @@ sudo mv composer.phar /usr/bin/composer
 
 service nginx restart
 
-echo cd /vagrant/src/ >> ~/.bashrc
+echo "cd /vagrant/src/" >> /home/vagrant/.bashrc
 echo -e "\n--- All set! Rock n' roll! ---\n"
 SCRIPT
 

@@ -4,7 +4,7 @@ nginx:
   links:
     - php
   ports:
-    - "80:80"
+    - "8080:80"
 php:
   build: build/php
   volumes:
@@ -19,3 +19,9 @@ php:
     APP_KEY: SomeRandomKey!!!
     APP_LOCALE: en
     APP_FALLBACK_LOCALE: en
+composer:
+  restart: 'no'
+  image: composer
+  command: install
+  volumes:
+    - ./src:/app
