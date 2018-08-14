@@ -22,6 +22,5 @@ php:
 composer:
   restart: 'no'
   image: composer
-  command: install
   volumes:
     - ./src:/app
